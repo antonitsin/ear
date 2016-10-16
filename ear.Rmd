@@ -1,0 +1,176 @@
+---
+title: "Ear"
+output: html_document
+---
+## 1.Loading the packages:
+
+```{r setup, include=FALSE}
+
+#install.packages("tm")
+library(tm) # Framework for text mining.
+#install.packages("SnowballC")
+library(SnowballC) # Provides wordStem() for stemming.
+#install.packages("qdap")
+library(qdap) # Quantitative discourse analysis of transcripts.
+#install.packages("qqdapDictionaries")
+library(qdapDictionaries)
+#install.packages("dplyr")
+library(dplyr) # Data preparation and pipes %>%.
+#install.packages("RColorBrewer")
+library(RColorBrewer) # Generate palette of colours for plots.
+#install.packages("ggplot2")
+library(ggplot2) # Plot word frequencies.
+#install.packages("scales")
+library(scales) # Include commas in numbers.
+#install.packages("Rgraphviz")
+#library(Rgraphviz)
+```
+
+
+## Part 2: Loading the data
+
+
+```{r pressure, echo=FALSE}
+setwd("C:/Users/aantonitsin/Desktop/work/aldp/aldp_2/00_ear")
+df<-head(read.csv("user_query.csv"),10)
+df$query<-as.character(df$query)
+df[1:3,]
+
+```
+
+
+## Part 3: Transformations
+
+
+```{r pressure, echo=FALSE}
+data_1<-VectorSource(df$query)
+data_2<-VCorpus(data_1)
+data_3 <- tm_map(data_2, content_transformer(tolower))
+data_4 <- tm_map(data_3, removeNumbers)
+data_5<- tm_map(data_4, removePunctuation)
+data_6 <- tm_map(data_5, removeWords, stopwords("english"))
+data_7 <- tm_map(data_6, stripWhitespace)
+library(SnowballC)
+data_8 <- tm_map(data_7, stemDocument)
+#inspect(data_8)
+
+```
+
+
+
+## Part 4: Doc term matrix
+
+```{r pressure, echo=FALSE}
+dtms <- DocumentTermMatrix(data_8)
+#names(dtms)
+dtms$dimnames$Docs<-df$user
+
+#dtms$dimnames
+
+#inspect(dtms)
+#str(dtms)
+a<-as.matrix(dtms)
+rownames(a) <-rownames(a)
+b<-t(sapply(by(a,rownames(a), colSums),identity))
+c1<-data.frame(b)
+#str(c1)
+#View(c1)
+c1[1:2,1:10]
+df2
+##Step 2
+data_12<-VectorSource(df2$title)
+data_22<-VCorpus(data_12)
+data_32 <- tm_map(data_22, content_transformer(tolower))
+data_42 <- tm_map(data_32, removeNumbers)
+data_52<- tm_map(data_42, removePunctuation)
+data_62 <- tm_map(data_52, removeWords, stopwords("english"))
+data_72 <- tm_map(data_62, stripWhitespace)
+library(SnowballC)
+data_82 <- tm_map(data_72, stemDocument)
+#inspect(data_82)
+
+##Step 4
+dtms2 <- DocumentTermMatrix(data_82)
+dtms2$dimnames$Docs<-df2$item
+#inspect(dtms2)
+#dtms2
+#str(dtms2)
+a2<-as.matrix(dtms2)
+b2<-t(sapply(by(a2,rownames(a2), colSums),identity))
+c2<-data.frame(b2)
+#str(c2)
+#View(c2)
+
+c2[1:2,1:10]
+```
+
+
+
+## Part 5: Creating matrix for auction title
+
+
+```{r pressure, echo=FALSE}
+##matrix for auction titles
+df2<-head(read.csv("items.csv", header=TRUE),10)
+names(df2)<-c("item", "title")
+df2$title<-as.character(df2$title)
+df2[1:3,]
+
+```
+
+
+
+
+
+
+Part 6: Creating matrix for step 3
+
+```{r pressure, echo=FALSE}
+c3<-matrix(nrow=length(rownames(c1)), ncol=length(rownames(c2)))
+
+rownames(c3)<-rownames(c1)
+colnames(c3)<-rownames(c2)
+
+time_do<-Sys.time()
+for (i in colnames(c3)) {
+
+for (j in rownames(c3)) {
+
+c3[paste(j,sep=""), paste(i,sep="")]<-sum(c1[paste(j,sep="") ,
+                        ifelse(length(colnames(c1)[which(colnames(c1)%in%colnames(c2[paste(i,sep=""),c2[paste(i,sep=""),]>0]))])>0,colnames(c1)[which(colnames(c1)%in%colnames(c2[paste(i,sep=""),c2[paste(i,sep=""),]>0]))],"")])
+}
+}
+time_posle<-Sys.time()
+time_posle-time_do
+
+c3
+
+```
+
+
+
+
+Part 7: Sorting step
+
+```{r pressure, echo=FALSE}
+c4<-matrix(nrow=length(rownames(c3)),ncol=length(colnames(c3)))
+
+
+rownames(c4)<-rownames(c3)
+c4
+
+
+```
+
+
+
+
+```{r pressure, echo=FALSE}
+c5<-as.data.frame(c4)
+for (i in rownames(c5)) {c5[i,]<-names(sort(c3[i,], decreasing=TRUE))}
+
+c5
+
+
+```
+
